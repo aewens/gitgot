@@ -1,0 +1,120 @@
+#!/usr/bin/env ruby
+
+=begin
+    
+File:      hubgit
+Version:   0.0.2
+Author:    Austin Ewens
+Created:   2014-11-12
+License:   The new BSD license
+Purpose:   Automate simple tasks for dealing with Git (for Github)
+    
+=end
+
+require "yaml"
+
+# To deal with ^C
+trap("SIGINT") { puts; exit }
+
+def run cmds
+    %x[#{cmds.map{|x|x.sub("\n", "")}.join(";")}]
+end
+
+def commands argv
+    root = File.expand_path(File.dirname(__FILE__))
+    argv.each do |arg|
+        case arg
+        when "new"
+            config = "#{root}/config.yml"
+            user = nil
+            if File.file? config
+                user = YAML.load(File.read(config))[:use]
+            else
+                print "user: "
+                user = $stdin.gets.chomp
+            end
+            print "repo: "
+            repo = $stdin.gets.chomp
+            print "desc: "
+            desc = $stdin.gets.chomp
+            
+            cmd  = []
+            cmd << "git init"
+            cmd << "curl -u '#{user}' https://api.github.com/user/repos -d \
+'{\"name\":\"#{repo}\", \"description\":\"#{desc}\"}'"
+            cmd << "git add ."
+            cmd << "git commit -m 'Initial commit'"
+            cmd << "git remote add origin git@github.com:#{user}/#{repo}.git"
+            cmd << "git push --set-upstream origin master"
+            run(cmd)
+            
+            words = "# Github repo for \"#{user}\" was initialized at \
+\"#{repo}\" for \"#{desc}\""
+
+            puts "\n#{words.sub("\n","")}\n\n"
+        when "commit"
+            print "reason: "
+            reason = $stdin.gets.chomp
+            cmd  = []
+            cmd << "git add ."
+            cmd << "git commit -m \"#{reason}\""
+            cmd << "git push"
+            run(cmd)
+        when "profile" 
+            regex = /^(true|t|yes|y)$/
+            config = "#{root}/config.yml"
+            print "user: "
+            user = $stdin.gets.chomp
+            print "use?: "
+            use  = regex =~ $stdin.gets.chomp ? true : false
+            conf = nil
+            if File.file? config
+                conf = YAML.load(File.read(config))
+                if use
+                    conf[:use] = user
+                else
+                    conf[:not] = [] if conf[:not].nil?
+                    conf[:not] << user
+                end
+            else
+                conf = use ? {:use=>user} : {:not=>[user]}
+            end
+            File.open(config, "w"){|f|f.write(YAML.dump conf)}
+        when "help"
+            puts <<-EOF
+= hubgit =
+
+    * Written by Austin Ewens (@aewens_)
+    * Copyright 2014, Austin Ewens
+
+== Description
+
+    Hubgit is a simple script helps that automates my source version control.
+    It is not meant to be anything fancy, but be a utility to simplify my life.
+
+== Usage
+
+    hubgit [command]
+
+== Commands
+
+    help    :: Prints out what you are reading now
+    new     :: Creates a new repository using the current directory
+    commit  :: Prompts for commit reason and the rest is done automagically
+    profile :: Prompts for user credentials to store locally for later reference
+
+EOF
+        else
+            raise "Wrong command"
+        end
+    end
+end
+
+here = ENV["PWD"].sub("~", ENV["HOME"])
+commands(ARGV)
+# file = file.gsub(/$/, ".yml") unless file =~ /.*\.yml/
+
+# words = "# Github repo for \"#{user}\" was initialized at \"#{repo}\" for 
+# \"#{desc}\""
+# 
+# puts "\n#{words.sub("\n","")}\n\n"
