@@ -8,7 +8,7 @@ Author:    Austin Ewens
 Created:   2014-11-12
 Copyright: (c) 2014 Austin Ewens
 License:   Gitgot may be freely distributed under public domain.
-Purpose:   Automate simple tasks for dealing with Git (for Github)
+Purpose:   Automate simple tasks for dealing with Git (for Github/BitBucket)
     
 =end
 
