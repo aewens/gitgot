@@ -2,11 +2,12 @@
 
 =begin
     
-File:      hubgit
-Version:   0.0.2
+File:      gitgot
+Version:   0.0.3
 Author:    Austin Ewens
 Created:   2014-11-12
-License:   The new BSD license
+Copyright: (c) 2014 Austin Ewens
+License:   Gitgot may be freely distributed under public domain.
 Purpose:   Automate simple tasks for dealing with Git (for Github)
     
 =end
@@ -28,10 +29,22 @@ def commands argv
             config = "#{root}/config.yml"
             user = nil
             if File.file? config
-                user = YAML.load(File.read(config))[:use]
+                conf = YAML.load(File.read(config))
+                user = conf[:use]
+                api  = conf[:api]
             else
                 print "user: "
                 user = $stdin.gets.chomp
+                print "api: "
+                apii = $stdin.gets.chomp
+                case apii
+                when "gh"
+                    api = "https://api.github.com/user/repos"
+                when "bb"
+                    api = "https://api.bitbucket.org/1.0/repositories/"
+                else
+                    api = "https://api.github.com/user/repos"
+                end
             end
             print "repo: "
             repo = $stdin.gets.chomp
@@ -40,7 +53,7 @@ def commands argv
             
             cmd  = []
             cmd << "git init"
-            cmd << "curl -u '#{user}' https://api.github.com/user/repos -d \
+            cmd << "curl -u '#{user}' #{api} -d \
 '{\"name\":\"#{repo}\", \"description\":\"#{desc}\"}'"
             cmd << "git add ."
             cmd << "git commit -m 'Initial commit'"
@@ -65,9 +78,19 @@ def commands argv
             config = "#{root}/config.yml"
             print "user: "
             user = $stdin.gets.chomp
+            print "api: "
+            apii = $stdin.gets.chomp
             print "use?: "
             use  = regex =~ $stdin.gets.chomp ? true : false
             conf = nil
+            case apii
+            when "gh"
+                api = "https://api.github.com/user/repos"
+            when "bb"
+                api = "https://api.bitbucket.org/1.0/repositories/"
+            else
+                api = "https://api.github.com/user/repos"
+            end
             if File.file? config
                 conf = YAML.load(File.read(config))
                 if use
@@ -76,6 +99,7 @@ def commands argv
                     conf[:not] = [] if conf[:not].nil?
                     conf[:not] << user
                 end
+                conf[:api] = api
             else
                 conf = use ? {:use=>user} : {:not=>[user]}
             end
