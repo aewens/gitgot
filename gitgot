@@ -51,24 +51,40 @@ def commands argv
             print "desc: "
             desc = $stdin.gets.chomp
             
-            site = nil
+            site = []
             case api
             when /github/
-                site = "github.com"
+                site = ["github","com"]
             when /bitbucket/
-                site = "bitbucket.org"
+                site = ["bitbucket","org"]
             else
-                site = "github.com"
+                site = ["github","com"]
             end
+            
+            sitee = site.join(".")
             
             cmd  = []
             cmd << "git init"
-            cmd << "curl -u '#{user}' #{api} -d \
-'{\"name\":\"#{repo}\", \"description\":\"#{desc}\"}'"
+            case site[0]
+            when "github"
+                cmd << "curl -u '#{user}' #{api} -d \
+                        '{\"name\":\"#{repo}\", \"description\":\"#{desc}\"}'"
+                cmd << "git remote add origin \
+                        git@#{sitee}:#{user}/#{repo}.git"
+            when "bitbucket"
+                cmd << "curl --user '#{user}' \
+                        https://api.bitbucket.org/1.0/repositories/ \
+                        --data name=sandbox --data is_private=true"
+                cmd << "git remote add origin \
+                        https://#{user}@#{sitee}/#{user}/#{repo}.git"
+            else
+                cmd << "curl -u '#{user}' #{api} -d \
+                        '{\"name\":\"#{repo}\", \"description\":\"#{desc}\"}'"
+                cmd << "git remote add origin git@#{sitee}:#{user}/#{repo}.git"
+            end
             cmd << "git add ."
             cmd << "git commit -m 'Initial commit'"
-            cmd << "git remote add origin git@#{site}:#{user}/#{repo}.git"
-            cmd << "git push --set-upstream origin master"
+            cmd << "git push -u origin master"
             run(cmd)
             
             words = "# Github repo for \"#{user}\" was initialized at \
@@ -116,19 +132,19 @@ def commands argv
             File.open(config, "w"){|f|f.write(YAML.dump conf)}
         when "help"
             puts <<-EOF
-= hubgit =
+= gitgot =
 
     * Written by Austin Ewens (@aewens_)
-    * Copyright 2014, Austin Ewens
+    * Copyright 2014-5, Austin Ewens
 
 == Description
 
-    Hubgit is a simple script helps that automates my source version control.
+    Gitgot is a simple script helps that automates my source version control.
     It is not meant to be anything fancy, but be a utility to simplify my life.
 
 == Usage
 
-    hubgit [command]
+    gitgot [command]
 
 == Commands
 
