@@ -26,7 +26,7 @@ def commands argv
     argv.each do |arg|
         case arg
         when "new"
-            config = "#{root}/config.yml"
+            config = "#{root}/_gitgot.yml"
             user = nil
             if File.file? config
                 conf = YAML.load(File.read(config))
@@ -51,13 +51,23 @@ def commands argv
             print "desc: "
             desc = $stdin.gets.chomp
             
+            site = nil
+            case api
+            when /github/
+                site = "github.com"
+            when /bitbucket/
+                site = "bitbucket.org"
+            else
+                site = "github.com"
+            end
+            
             cmd  = []
             cmd << "git init"
             cmd << "curl -u '#{user}' #{api} -d \
 '{\"name\":\"#{repo}\", \"description\":\"#{desc}\"}'"
             cmd << "git add ."
             cmd << "git commit -m 'Initial commit'"
-            cmd << "git remote add origin git@github.com:#{user}/#{repo}.git"
+            cmd << "git remote add origin git@#{site}:#{user}/#{repo}.git"
             cmd << "git push --set-upstream origin master"
             run(cmd)
             
@@ -75,7 +85,7 @@ def commands argv
             run(cmd)
         when "profile" 
             regex = /^(true|t|yes|y)$/
-            config = "#{root}/config.yml"
+            config = "#{root}/_gitgot.yml"
             print "user: "
             user = $stdin.gets.chomp
             print "api: "
@@ -136,9 +146,3 @@ end
 
 here = ENV["PWD"].sub("~", ENV["HOME"])
 commands(ARGV)
-# file = file.gsub(/$/, ".yml") unless file =~ /.*\.yml/
-
-# words = "# Github repo for \"#{user}\" was initialized at \"#{repo}\" for 
-# \"#{desc}\""
-# 
-# puts "\n#{words.sub("\n","")}\n\n"
