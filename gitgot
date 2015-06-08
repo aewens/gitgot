@@ -3,7 +3,7 @@
 =begin
     
 File:      gitgot
-Version:   0.1.0
+Version:   0.2.0
 Author:    Austin Ewens
 Created:   2014-11-12
 Copyright: (c) 2014-5 Austin Ewens
@@ -74,7 +74,7 @@ def commands argv
             when "bitbucket"
                 cmd << "curl --user '#{user}' \
                         https://api.bitbucket.org/1.0/repositories/ \
-                        --data name=sandbox --data is_private=true"
+                        --data name=#{repo} --data is_private=true"
                 cmd << "git remote add origin \
                         https://#{user}@#{sitee}/#{user}/#{repo}.git"
             else
@@ -87,7 +87,7 @@ def commands argv
             cmd << "git push -u origin master"
             run(cmd)
             
-            words = "# Github repo for \"#{user}\" was initialized at \
+            words = "# A repo for \"#{user}\" was initialized at \
 \"#{repo}\" for \"#{desc}\""
 
             puts "\n#{words.sub("\n","")}\n\n"
