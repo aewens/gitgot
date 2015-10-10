@@ -3,7 +3,7 @@
 =begin
     
 File:      gitgot
-Version:   0.2.0
+Version:   0.2.1
 Author:    Austin Ewens
 Created:   2014-11-12
 Copyright: (c) 2014-5 Austin Ewens
@@ -104,6 +104,8 @@ def commands argv
             config = "#{root}/_gitgot.yml"
             print "user: "
             user = $stdin.gets.chomp
+            print "email: "
+            email = $stdin.gets.chomp
             print "api: "
             apii = $stdin.gets.chomp
             print "use?: "
@@ -121,15 +123,27 @@ def commands argv
                 conf = YAML.load(File.read(config))
                 if use
                     conf[:use] = user
+                    conf[:email] = email
                 else
-                    conf[:not] = [] if conf[:not].nil?
-                    conf[:not] << user
+                    conf[:not] = {} if conf[:not].nil?
+                    conf[:not] << {:user=>user,:email=>email}
                 end
                 conf[:api] = api
             else
-                conf = use ? {:use=>user} : {:not=>[user]}
+                if use
+                    conf = {:use=>user,:email=>email} 
+                else 
+                    conf = {}
+                    conf[:not] << {:user=>user,:email=>email}
+                end
             end
             File.open(config, "w"){|f|f.write(YAML.dump conf)}
+            if use
+                cmd  = []
+                cmd << "git config --global user.name \"#{user}\""
+                cmd << "git config --global user.email \"#{email}\""
+                run(cmd)
+            end
         when "help"
             puts <<-EOF
 = gitgot =
